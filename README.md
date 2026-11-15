@@ -78,6 +78,6 @@ async function askAI(){
   button.disabled=false;
  }
 }
-</script>
+</script><meta name="google-site-verification" content="CODE_PERSONNEL" />
 </body>
 </html><meta name="google-site-verification" content="...">
