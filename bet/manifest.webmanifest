@@ -1,0 +1,11 @@
+{
+  "name": "AK BET INTELLIGENCE",
+  "short_name": "AK BET",
+  "description": "Plateforme expérimentale d'analyse sportive",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#071426",
+  "theme_color": "#071426",
+  "icons": [{"src":"./icon.svg","sizes":"any","type":"image/svg+xml","purpose":"any maskable"}]
+}
