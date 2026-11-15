@@ -80,4 +80,4 @@ async function askAI(){
 }
 </script>
 </body>
-</html>
+</html><meta name="google-site-verification" content="...">
