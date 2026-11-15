@@ -48,7 +48,38 @@ footer{text-align:center;color:var(--muted);font-size:12px;padding:24px}
 <div><label for="formB">Forme récente B (0–100)</label><input id="formB" type="number" min="0" max="100" value="60"></div>
 </div><button id="analyse">Calculer les estimations</button></section>
 <section class="card result" id="result" aria-live="polite"><h2>Estimations statistiques</h2><div id="summary" class="small"></div><div id="probabilities"></div><p class="small">Ces pourcentages sont des estimations simplifiées basées uniquement sur les valeurs saisies. Ils ne constituent ni une certitude ni un conseil de pari.</p></section>
-<section class="card"><h2>Feuille de route</h2><ul class="small"><li>Connecter des sources de résultats autorisées et documentées.</li><li>Constituer un historique de données et tester le modèle rétrospectivement.</li><li>Mesurer la calibration et les erreurs avant toute diffusion publique.</li><li>Créer ensuite un moteur prédictif validé, sans promettre de gains.</li></ul></section>
+<section class="card" id="advanced">
+<h2>Probabilités détaillées — Football</h2>
+<p class="small">Saisis les moyennes observées sur les derniers matchs de chaque équipe. Le calcul est un modèle de Poisson simplifié, non entraîné et non validé. Minimum requis : 5 matchs par équipe.</p>
+<h3 style="font-size:15px">Échantillon et buts (moyennes par match)</h3>
+<div class="grid">
+<div><label for="sampleA">Matchs analysés — équipe A</label><input id="sampleA" type="number" min="0" max="100" placeholder="Ex. 10"></div>
+<div><label for="sampleB">Matchs analysés — équipe B</label><input id="sampleB" type="number" min="0" max="100" placeholder="Ex. 10"></div>
+<div><label for="goalsForA">Buts marqués A</label><input id="goalsForA" type="number" min="0" max="10" step="0.1" placeholder="Ex. 1.6"></div>
+<div><label for="goalsAgainstA">Buts encaissés A</label><input id="goalsAgainstA" type="number" min="0" max="10" step="0.1" placeholder="Ex. 1.0"></div>
+<div><label for="goalsForB">Buts marqués B</label><input id="goalsForB" type="number" min="0" max="10" step="0.1" placeholder="Ex. 1.2"></div>
+<div><label for="goalsAgainstB">Buts encaissés B</label><input id="goalsAgainstB" type="number" min="0" max="10" step="0.1" placeholder="Ex. 1.4"></div>
+</div>
+<h3 style="font-size:15px;margin-top:18px">Statistiques moyennes par équipe et par match</h3>
+<div class="grid">
+<div><label for="cornersA">Corners A</label><input id="cornersA" type="number" min="0" max="30" step="0.1" placeholder="Ex. 5.2"></div>
+<div><label for="cornersB">Corners B</label><input id="cornersB" type="number" min="0" max="30" step="0.1" placeholder="Ex. 4.8"></div>
+<div><label for="throwinsA">Touches A</label><input id="throwinsA" type="number" min="0" max="60" step="0.1" placeholder="Ex. 18"></div>
+<div><label for="throwinsB">Touches B</label><input id="throwinsB" type="number" min="0" max="60" step="0.1" placeholder="Ex. 17"></div>
+<div><label for="foulsA">Fautes A</label><input id="foulsA" type="number" min="0" max="40" step="0.1" placeholder="Ex. 12"></div>
+<div><label for="foulsB">Fautes B</label><input id="foulsB" type="number" min="0" max="40" step="0.1" placeholder="Ex. 11"></div>
+<div><label for="cardsA">Cartons jaunes A</label><input id="cardsA" type="number" min="0" max="10" step="0.1" placeholder="Ex. 1.8"></div>
+<div><label for="cardsB">Cartons jaunes B</label><input id="cardsB" type="number" min="0" max="10" step="0.1" placeholder="Ex. 2.0"></div>
+</div>
+<h3 style="font-size:15px;margin-top:18px">Absences à confirmer</h3>
+<div class="grid">
+<div><label for="injuriesA">Joueurs absents A (nombre confirmé)</label><input id="injuriesA" type="number" min="0" max="30" step="1" placeholder="Ex. 1"></div>
+<div><label for="injuriesB">Joueurs absents B (nombre confirmé)</label><input id="injuriesB" type="number" min="0" max="30" step="1" placeholder="Ex. 2"></div>
+</div>
+<p class="small">Les absences sont affichées comme information seulement : sans identité, poste, temps de jeu et confirmation d'une source fiable, elles ne modifient pas artificiellement les probabilités.</p>
+<button id="calcAdvanced" type="button">Calculer les probabilités détaillées</button>
+<div id="advancedResult" class="small" aria-live="polite" style="margin-top:16px"></div>
+</section><section class="card"><h2>Feuille de route</h2><ul class="small"><li>Connecter des sources de résultats autorisées et documentées.</li><li>Constituer un historique de données et tester le modèle rétrospectivement.</li><li>Mesurer la calibration et les erreurs avant toute diffusion publique.</li><li>Créer ensuite un moteur prédictif validé, sans promettre de gains.</li></ul></section>
 </main><footer>AK BET INTELLIGENCE · Outil d'analyse à visée informative</footer>
 <script>
 const $=id=>document.getElementById(id);
@@ -66,7 +97,43 @@ $('analyse').addEventListener('click',()=>{
  $('result').style.display='block';$('result').scrollIntoView({behavior:'smooth',block:'start'});
 });
 
-// Données de rencontres SportScore : elles enrichissent l'écran mais ne génèrent pas encore de pronostic automatique.
+
+function num(id){const v=$(id).value.trim();return v===''?null:Number(v)}
+function poisson(lambda,k){let p=Math.exp(-lambda);for(let i=1;i<=k;i++)p*=lambda/i;return p}
+function pct(v){return (v*100).toFixed(1)+'%'}
+function addText(parent,tag,txt){const e=document.createElement(tag);e.textContent=txt;parent.appendChild(e);return e}
+function calcAdvanced(){
+ const out=$('advancedResult');out.replaceChildren();
+ const required=['sampleA','sampleB','goalsForA','goalsAgainstA','goalsForB','goalsAgainstB'];
+ const vals=Object.fromEntries(required.map(id=>[id,num(id)]));
+ if(required.some(id=>vals[id]===null||!Number.isFinite(vals[id])||vals[id]<0)){addText(out,'p','Renseigne les 6 champs de matchs et de buts pour calculer les scores exacts.');return}
+ if(vals.sampleA<5||vals.sampleB<5){addText(out,'p','Données insuffisantes : indique au moins 5 matchs analysés pour chaque équipe.');return}
+ const la=(vals.goalsForA+vals.goalsAgainstB)/2,lb=(vals.goalsForB+vals.goalsAgainstA)/2;
+ addText(out,'h3','Scores exacts les plus probables');
+ const scores=[];
+ for(let a=0;a<=6;a++)for(let b=0;b<=6;b++)scores.push({a,b,p:poisson(la,a)*poisson(lb,b)});
+ scores.sort((x,y)=>y.p-x.p);
+ scores.slice(0,8).forEach(s=>addText(out,'p',s.a+' – '+s.b+' : '+pct(s.p)));
+ addText(out,'p','Buts attendus estimés : '+la.toFixed(2)+' pour '+($('teamA').value.trim()||'A')+' et '+lb.toFixed(2)+' pour '+($('teamB').value.trim()||'B')+'.');
+ const metricRows=[
+  ['Corners',num('cornersA'),num('cornersB'),8.5],
+  ['Touches',num('throwinsA'),num('throwinsB'),35.5],
+  ['Fautes',num('foulsA'),num('foulsB'),22.5],
+  ['Cartons jaunes',num('cardsA'),num('cardsB'),3.5]
+ ];
+ addText(out,'h3','Estimations des statistiques de match');
+ metricRows.forEach(([name,a,b,line])=>{
+  if(a===null||b===null||!Number.isFinite(a)||!Number.isFinite(b)||a<0||b<0){addText(out,'p',name+' : données manquantes — estimation non calculée.');return}
+  const mean=a+b;let under=0;for(let k=0;k<=Math.floor(line);k++)under+=poisson(mean,k);
+  addText(out,'p',name+' : moyenne totale '+mean.toFixed(1)+' · moins de '+line+' : '+pct(under)+' · plus de '+line+' : '+pct(1-under)+'.');
+ });
+ const ia=num('injuriesA'),ib=num('injuriesB');
+ addText(out,'p','Absences saisies : '+(ia===null?'non renseigné':ia)+' pour A et '+(ib===null?'non renseigné':ib)+' pour B. À confirmer auprès des clubs ou compétitions.');
+ addText(out,'p','Qualité de l’échantillon : '+(Math.min(vals.sampleA,vals.sampleB)>=20?'volume de données saisi élevé':Math.min(vals.sampleA,vals.sampleB)>=10?'volume de données saisi moyen':'petit échantillon')+'. Cela ne signifie pas que le modèle est calibré.');
+ addText(out,'p','Limites : calculs fondés sur les moyennes que tu saisis, avec hypothèse de Poisson et indépendance simplificatrice. Les touches, fautes, cartons et scores exacts ne sont pas des prédictions validées. Les cartons rouges, blessures et compositions ne sont pas prédits.');
+}
+$('calcAdvanced').addEventListener('click',calcAdvanced);
+\n// Données de rencontres SportScore : elles enrichissent l'écran mais ne génèrent pas encore de pronostic automatique.
 const liveKey='ak_bet_live_cache_v1';
 function safeText(value){return value===null||value===undefined?'':String(value)}
 function showMatches(matches,sourceLabel){
