@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#071426">
+<meta name="description" content="AK BET INTELLIGENCE — plateforme expérimentale d'analyse statistique sportive.">
+<link rel="manifest" href="./manifest.webmanifest">
+<title>AK BET INTELLIGENCE</title>
+<style>
+:root{color-scheme:dark;--bg:#071426;--panel:#10243c;--line:#24415f;--blue:#16b8ff;--muted:#a9bdd0;--white:#f4f8fc}
+*{box-sizing:border-box}body{margin:0;background:linear-gradient(145deg,#06101e,#0b1e34);font:16px system-ui,sans-serif;color:var(--white);min-height:100vh}
+header{padding:24px 18px;border-bottom:1px solid var(--line);background:#071426cc}main{max-width:980px;margin:auto;padding:22px 16px}
+.brand{font-weight:900;letter-spacing:1.5px;font-size:clamp(22px,5vw,34px)}.brand span{color:var(--blue)}.sub{color:var(--muted);margin-top:6px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:18px;margin:16px 0;box-shadow:0 12px 35px #0003}
+h2{font-size:19px;margin:0 0 14px}label{display:block;color:var(--muted);font-size:13px;margin:12px 0 6px}
+input,select{width:100%;padding:12px;border-radius:10px;border:1px solid var(--line);background:#07182b;color:white;font:inherit}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px}
+button{border:0;border-radius:10px;padding:13px 18px;background:var(--blue);color:#03111e;font-weight:800;font-size:15px;margin-top:16px;width:100%;cursor:pointer}
+.small{font-size:12px;color:var(--muted);line-height:1.5}.result{display:none}.bar{height:10px;border-radius:8px;background:#07182b;overflow:hidden;margin:7px 0 13px}.fill{height:100%;background:linear-gradient(90deg,#087dcb,var(--blue));width:0}
+.pill{display:inline-block;padding:5px 9px;border:1px solid var(--line);border-radius:20px;color:var(--blue);font-size:12px}
+footer{text-align:center;color:var(--muted);font-size:12px;padding:24px}
+</style>
+</head>
+<body>
+<header><div class="brand">AK <span>BET</span> INTELLIGENCE</div><div class="sub">Analyse sportive expérimentale · Multi-sports</div></header>
+<main>
+<section class="card"><span class="pill">VERSION EXPÉRIMENTALE</span><h2 style="margin-top:12px">Analyser une rencontre</h2>
+<p class="small">Renseigne les informations disponibles. Le calcul actuel est un modèle heuristique de démonstration, pas une intelligence artificielle entraînée ni une donnée sportive en direct.</p>
+<div class="grid">
+<div><label for="sport">Sport</label><select id="sport"><option value="football">Football</option><option>Basketball</option><option>Tennis</option><option>Volleyball</option><option>Handball</option><option>Rugby</option><option>Hockey</option><option>Baseball</option><option>Autre</option></select></div>
+<div><label for="teamA">Équipe / joueur A</label><input id="teamA" placeholder="Ex. Équipe A"></div>
+<div><label for="teamB">Équipe / joueur B</label><input id="teamB" placeholder="Ex. Équipe B"></div>
+<div><label for="ratingA">Niveau estimé A (0–100)</label><input id="ratingA" type="number" min="0" max="100" value="65"></div>
+<div><label for="ratingB">Niveau estimé B (0–100)</label><input id="ratingB" type="number" min="0" max="100" value="60"></div>
+<div><label for="formA">Forme récente A (0–100)</label><input id="formA" type="number" min="0" max="100" value="60"></div>
+<div><label for="formB">Forme récente B (0–100)</label><input id="formB" type="number" min="0" max="100" value="60"></div>
+</div><button id="analyse">Calculer les estimations</button></section>
+<section class="card result" id="result" aria-live="polite"><h2>Estimations statistiques</h2><div id="summary" class="small"></div><div id="probabilities"></div><p class="small">Ces pourcentages sont des estimations simplifiées basées uniquement sur les valeurs saisies. Ils ne constituent ni une certitude ni un conseil de pari.</p></section>
+<section class="card"><h2>Feuille de route</h2><ul class="small"><li>Connecter des sources de résultats autorisées et documentées.</li><li>Constituer un historique de données et tester le modèle rétrospectivement.</li><li>Mesurer la calibration et les erreurs avant toute diffusion publique.</li><li>Créer ensuite un moteur prédictif validé, sans promettre de gains.</li></ul></section>
+</main><footer>AK BET INTELLIGENCE · Outil d'analyse à visée informative</footer>
+<script>
+const $=id=>document.getElementById(id);
+function clamp(n){return Math.max(0,Math.min(100,Number(n)||0))}
+$('analyse').addEventListener('click',()=>{
+ const a=$('teamA').value.trim()||'A',b=$('teamB').value.trim()||'B';
+ const ra=clamp($('ratingA').value),rb=clamp($('ratingB').value),fa=clamp($('formA').value),fb=clamp($('formB').value);
+ const scoreA=0.65*ra+0.35*fa,scoreB=0.65*rb+0.35*fb,d=scoreA-scoreB;
+ let pA,pB,pDraw=0;
+ if($('sport').value==='football'){pDraw=Math.max(18,Math.min(34,30-Math.abs(d)*0.16));const rem=100-pDraw;const share=1/(1+Math.exp(-d/13));pA=rem*share;pB=rem-pA}
+ else{pA=100/(1+Math.exp(-d/13));pB=100-pA}
+ const rows=[['Victoire '+a,pA],...(pDraw? [['Match nul',pDraw]]:[]),['Victoire '+b,pB]];
+ $('summary').textContent=$('sport').value+' · '+a+' contre '+b+' · calcul indicatif';
+ $('probabilities').innerHTML=rows.map(([name,p])=>'<div><strong>'+name+'</strong> — '+p.toFixed(1)+'%<div class="bar"><div class="fill" style="width:'+p+'%"></div></div></div>').join('');
+ $('result').style.display='block';$('result').scrollIntoView({behavior:'smooth',block:'start'});
+});
+if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}))}
+</script></body></html>
