@@ -27,14 +27,14 @@ footer{text-align:center;color:var(--muted);font-size:12px;padding:24px}
 <main>
 <section class="card" id="liveCard">
 <h2>Rencontres réelles</h2>
-<p class="small">Calendrier et scores fournis par SportScore. Les données nécessitent Internet ; la dernière réponse consultée est conservée sur cet appareil pour consultation hors ligne.</p>
+<p class="small">Calendrier et résultats de football via Football-Data.org, avec un relais sécurisé AK BET INTELLIGENCE. Les compétitions proposées dépendent de ton accès API. Les dernières rencontres consultées restent disponibles hors ligne.</p>
 <div class="grid">
-<div><label for="liveSport">Choisir un sport</label><select id="liveSport"><option value="football">Football</option><option value="basketball">Basketball</option><option value="tennis">Tennis</option><option value="cricket">Cricket</option></select></div>
+<div><label for="liveCompetition">Compétition</label><select id="liveCompetition"><option value="PL">Chargement des compétitions…</option></select></div>
 </div>
 <button id="loadMatches" type="button">Charger les rencontres</button>
 <p id="liveStatus" class="small" aria-live="polite">Appuie sur « Charger les rencontres » pour récupérer les données.</p>
 <div id="matchesList" class="small"></div>
-<a href="https://sportscore.com/" rel="dofollow" title="Sports data by SportScore" style="display:inline-block;margin-top:12px;color:var(--blue);font-weight:700">Powered by SportScore</a>
+<a href="https://www.football-data.org/" rel="noopener" style="display:inline-block;margin-top:12px;color:var(--blue);font-weight:700">Source : Football-Data.org</a>
 </section>
 <section class="card"><span class="pill">VERSION EXPÉRIMENTALE</span><h2 style="margin-top:12px">Analyser une rencontre</h2>
 <p class="small">Renseigne les informations disponibles. Le calcul actuel est un modèle heuristique de démonstration, pas une intelligence artificielle entraînée ni une donnée sportive en direct.</p>
@@ -148,41 +148,62 @@ $('calcAdvanced').addEventListener('click',()=>{
  }
 });
 
-// Données de rencontres SportScore : elles enrichissent l'écran mais ne génèrent pas encore de pronostic automatique.
-const liveKey='ak_bet_live_cache_v1';
+// Rencontres Football-Data.org via le Worker AK : le jeton ne quitte jamais Cloudflare.
+const API_BASE='https://ak-intelligence-api.abdoulayeky080.workers.dev/football-data';
+const liveKey='ak_bet_football_data_cache_v2';
 function safeText(value){return value===null||value===undefined?'':String(value)}
 function showMatches(matches,sourceLabel){
  const list=$('matchesList');list.replaceChildren();
- if(!Array.isArray(matches)||matches.length===0){list.textContent='Aucune rencontre disponible pour cette sélection.';return}
- matches.slice(0,20).forEach(m=>{
+ if(!Array.isArray(matches)||matches.length===0){list.textContent='Aucune rencontre disponible pour cette compétition et cette période.';$('liveStatus').textContent=sourceLabel;return}
+ matches.slice(0,30).forEach(m=>{
   const card=document.createElement('div');card.style.cssText='padding:12px;margin:10px 0;border:1px solid var(--line);border-radius:10px;background:#07182b';
-  const home=m.homeTeam?.name||m.home_team?.name||m.home_team||m.strHomeTeam||m.home||m.player1?.name||m.player1||'Participant A';
-  const away=m.awayTeam?.name||m.away_team?.name||m.away_team||m.strAwayTeam||m.away||m.player2?.name||m.player2||'Participant B';
-  const hs=m.home_score??m.homeScore,as=m.away_score??m.awayScore;const score=(hs!==null&&hs!==undefined&&as!==null&&as!==undefined)?(hs+' - '+as):(m.score?.fullTime||m.score||m.result||m.strResult||'');
-  const status=m.status||m.state||m.strStatus||'';
-  const date=m.time||m.date||m.utcDate||m.startTime||m.strTimestamp||'';
-  const title=document.createElement('strong');title.textContent=safeText(home)+' — '+safeText(away);card.appendChild(title);
-  const detail=document.createElement('div');detail.style.marginTop='5px';detail.textContent=[safeText(score),safeText(status),safeText(date)].filter(Boolean).join(' · ');card.appendChild(detail);
+  const home=m.homeTeam?.name||'Équipe à confirmer',away=m.awayTeam?.name||'Équipe à confirmer';
+  const ft=m.score?.fullTime||{},ht=m.score?.halfTime||{};
+  const hasScore=ft.home!==null&&ft.home!==undefined&&ft.away!==null&&ft.away!==undefined;
+  const score=hasScore?(ft.home+' - '+ft.away):'À jouer';
+  const date=m.utcDate?new Date(m.utcDate).toLocaleString('fr-FR',{dateStyle:'medium',timeStyle:'short'}):'Date à confirmer';
+  const title=document.createElement('strong');title.textContent=home+' — '+away;card.appendChild(title);
+  const detail=document.createElement('div');detail.style.marginTop='5px';detail.textContent=[score,m.status||'',date,m.matchday?'Journée '+m.matchday:''].filter(Boolean).join(' · ');card.appendChild(detail);
+  if(hasScore&&ht.home!==null&&ht.away!==null){const half=document.createElement('div');half.className='small';half.textContent='Mi-temps : '+ht.home+' - '+ht.away;card.appendChild(half)}
   list.appendChild(card);
  });
- $('liveStatus').textContent=sourceLabel+' · '+matches.length+' rencontre(s) affichée(s).';
+ $('liveStatus').textContent=sourceLabel+' · '+matches.length+' rencontre(s).';
+}
+async function loadCompetitions(){
+ const select=$('liveCompetition');select.innerHTML='<option value="">Chargement…</option>';
+ try{
+  const r=await fetch(API_BASE+'/competitions',{cache:'no-store'});
+  if(!r.ok)throw new Error('HTTP '+r.status);
+  const data=await r.json();const comps=(data.competitions||[]).filter(c=>c.code);
+  select.replaceChildren();
+  comps.sort((a,b)=>(a.name||'').localeCompare(b.name||'','fr')).forEach(c=>{
+   const o=document.createElement('option');o.value=c.code;o.textContent=(c.name||c.code)+' ('+c.code+')';select.appendChild(o);
+  });
+  if(!comps.length)throw new Error('Aucune compétition accessible avec ce compte');
+  $('liveStatus').textContent='Compétitions chargées. Choisis une compétition puis charge les rencontres.';
+ }catch(e){
+  select.innerHTML='<option value="PL">Premier League (PL)</option><option value="FL1">Ligue 1 (FL1)</option><option value="CL">Ligue des champions (CL)</option>';
+  $('liveStatus').textContent='Impossible de charger la liste des compétitions. Tu peux essayer une compétition proposée ; vérifie le Worker Cloudflare.';
+ }
 }
 async function loadMatches(){
- const sport=$('liveSport').value;const status=$('liveStatus');status.textContent='Chargement des données…';
+ const code=$('liveCompetition').value||'PL';const status=$('liveStatus');status.textContent='Chargement des rencontres…';
+ const now=new Date(),later=new Date(now.getTime()+7*86400000);
+ const dateFrom=now.toISOString().slice(0,10),dateTo=later.toISOString().slice(0,10);
  try{
-  const response=await fetch('https://sportscore.com/api/widget/matches/?sport='+encodeURIComponent(sport)+'&limit=20&src=ak-bet-intelligence',{cache:'no-store'});
-  if(!response.ok)throw new Error('HTTP '+response.status);
-  const data=await response.json();const matches=Array.isArray(data)?data:(data.matches||data.events||data.results||[]);
-  if(!Array.isArray(matches))throw new Error('Format de réponse inattendu');
-  localStorage.setItem(liveKey,JSON.stringify({sport,matches,savedAt:new Date().toISOString()}));
-  showMatches(matches,'Données récupérées en ligne');
+  const url=API_BASE+'/competitions/'+encodeURIComponent(code)+'/matches?dateFrom='+dateFrom+'&dateTo='+dateTo;
+  const r=await fetch(url,{cache:'no-store'});
+  if(!r.ok){let msg='HTTP '+r.status;try{const x=await r.json();msg=x.message||x.error||msg}catch(e){}throw new Error(msg)}
+  const data=await r.json(),matches=data.matches||[];
+  localStorage.setItem(liveKey,JSON.stringify({code,matches,savedAt:new Date().toISOString()}));
+  showMatches(matches,'Données Football-Data.org · '+(data.competition?.name||code));
  }catch(error){
   let cached=null;try{cached=JSON.parse(localStorage.getItem(liveKey)||'null')}catch(e){}
-  if(cached&&cached.sport===sport){showMatches(cached.matches,'Copie locale consultée hors ligne · '+new Date(cached.savedAt).toLocaleString());status.textContent+=' (connexion indisponible : copie locale affichée)';}
-  else{status.textContent='Impossible de récupérer les rencontres. Vérifie ta connexion puis réessaie.';$('matchesList').textContent='Aucune copie locale disponible pour ce sport.';}
+  if(cached&&cached.code===code){showMatches(cached.matches,'Copie locale · '+new Date(cached.savedAt).toLocaleString('fr-FR')+' (connexion indisponible)')}
+  else{status.textContent='Échec du chargement : '+error.message+'. Vérifie que le Worker a été mis à jour et déployé.';$('matchesList').textContent='Aucune copie locale disponible.'}
  }
 }
 $('loadMatches').addEventListener('click',loadMatches);
-
+loadCompetitions();
 if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}))}
 </script></body></html>
