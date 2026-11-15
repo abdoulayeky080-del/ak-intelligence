@@ -132,7 +132,21 @@ function calcAdvanced(){
  addText(out,'p','Qualité de l’échantillon : '+(Math.min(vals.sampleA,vals.sampleB)>=20?'volume de données saisi élevé':Math.min(vals.sampleA,vals.sampleB)>=10?'volume de données saisi moyen':'petit échantillon')+'. Cela ne signifie pas que le modèle est calibré.');
  addText(out,'p','Limites : calculs fondés sur les moyennes que tu saisis, avec hypothèse de Poisson et indépendance simplificatrice. Les touches, fautes, cartons et scores exacts ne sont pas des prédictions validées. Les cartons rouges, blessures et compositions ne sont pas prédits.');
 }
-$('calcAdvanced').addEventListener('click',calcAdvanced);
+$('calcAdvanced').addEventListener('click',()=>{
+ const out=$('advancedResult');
+ out.style.display='block';
+ out.textContent='Calcul en cours…';
+ try{
+  calcAdvanced();
+  out.style.display='block';
+  out.scrollIntoView({behavior:'smooth',block:'center'});
+ }catch(error){
+  out.replaceChildren();
+  addText(out,'p','Erreur pendant le calcul : '+(error&&error.message?error.message:'erreur inconnue')+'. Vérifie les champs puis réessaie.');
+  out.style.display='block';
+  out.scrollIntoView({behavior:'smooth',block:'center'});
+ }
+});
 
 // Données de rencontres SportScore : elles enrichissent l'écran mais ne génèrent pas encore de pronostic automatique.
 const liveKey='ak_bet_live_cache_v1';
