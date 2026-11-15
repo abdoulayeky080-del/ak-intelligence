@@ -25,6 +25,17 @@ footer{text-align:center;color:var(--muted);font-size:12px;padding:24px}
 <body>
 <header><div class="brand">AK <span>BET</span> INTELLIGENCE</div><div class="sub">Analyse sportive expérimentale · Multi-sports</div></header>
 <main>
+<section class="card" id="liveCard">
+<h2>Rencontres réelles</h2>
+<p class="small">Calendrier et scores fournis par SportScore. Les données nécessitent Internet ; la dernière réponse consultée est conservée sur cet appareil pour consultation hors ligne.</p>
+<div class="grid">
+<div><label for="liveSport">Choisir un sport</label><select id="liveSport"><option value="football">Football</option><option value="basketball">Basketball</option><option value="tennis">Tennis</option><option value="cricket">Cricket</option></select></div>
+</div>
+<button id="loadMatches" type="button">Charger les rencontres</button>
+<p id="liveStatus" class="small" aria-live="polite">Appuie sur « Charger les rencontres » pour récupérer les données.</p>
+<div id="matchesList" class="small"></div>
+<a href="https://sportscore.com/" rel="dofollow" title="Sports data by SportScore" style="display:inline-block;margin-top:12px;color:var(--blue);font-weight:700">Powered by SportScore</a>
+</section>
 <section class="card"><span class="pill">VERSION EXPÉRIMENTALE</span><h2 style="margin-top:12px">Analyser une rencontre</h2>
 <p class="small">Renseigne les informations disponibles. Le calcul actuel est un modèle heuristique de démonstration, pas une intelligence artificielle entraînée ni une donnée sportive en direct.</p>
 <div class="grid">
@@ -54,5 +65,42 @@ $('analyse').addEventListener('click',()=>{
  $('probabilities').innerHTML=rows.map(([name,p])=>'<div><strong>'+name+'</strong> — '+p.toFixed(1)+'%<div class="bar"><div class="fill" style="width:'+p+'%"></div></div></div>').join('');
  $('result').style.display='block';$('result').scrollIntoView({behavior:'smooth',block:'start'});
 });
+
+// Données de rencontres SportScore : elles enrichissent l'écran mais ne génèrent pas encore de pronostic automatique.
+const liveKey='ak_bet_live_cache_v1';
+function safeText(value){return value===null||value===undefined?'':String(value)}
+function showMatches(matches,sourceLabel){
+ const list=$('matchesList');list.replaceChildren();
+ if(!Array.isArray(matches)||matches.length===0){list.textContent='Aucune rencontre disponible pour cette sélection.';return}
+ matches.slice(0,20).forEach(m=>{
+  const card=document.createElement('div');card.style.cssText='padding:12px;margin:10px 0;border:1px solid var(--line);border-radius:10px;background:#07182b';
+  const home=m.homeTeam?.name||m.home_team?.name||m.home_team||m.strHomeTeam||m.home||m.player1?.name||m.player1||'Participant A';
+  const away=m.awayTeam?.name||m.away_team?.name||m.away_team||m.strAwayTeam||m.away||m.player2?.name||m.player2||'Participant B';
+  const score=m.score?.fullTime||m.score||m.result||m.strResult||'';
+  const status=m.status||m.state||m.strStatus||'';
+  const date=m.date||m.utcDate||m.startTime||m.strTimestamp||'';
+  const title=document.createElement('strong');title.textContent=safeText(home)+' — '+safeText(away);card.appendChild(title);
+  const detail=document.createElement('div');detail.style.marginTop='5px';detail.textContent=[safeText(score),safeText(status),safeText(date)].filter(Boolean).join(' · ');card.appendChild(detail);
+  list.appendChild(card);
+ });
+ $('liveStatus').textContent=sourceLabel+' · '+matches.length+' rencontre(s) affichée(s).';
+}
+async function loadMatches(){
+ const sport=$('liveSport').value;const status=$('liveStatus');status.textContent='Chargement des données…';
+ try{
+  const response=await fetch('https://sportscore.com/api/widget/matches/?sport='+encodeURIComponent(sport)+'&limit=20&src=ak-bet-intelligence',{cache:'no-store'});
+  if(!response.ok)throw new Error('HTTP '+response.status);
+  const data=await response.json();const matches=Array.isArray(data)?data:(data.matches||data.events||data.results||[]);
+  if(!Array.isArray(matches))throw new Error('Format de réponse inattendu');
+  localStorage.setItem(liveKey,JSON.stringify({sport,matches,savedAt:new Date().toISOString()}));
+  showMatches(matches,'Données récupérées en ligne');
+ }catch(error){
+  let cached=null;try{cached=JSON.parse(localStorage.getItem(liveKey)||'null')}catch(e){}
+  if(cached&&cached.sport===sport){showMatches(cached.matches,'Copie locale consultée hors ligne · '+new Date(cached.savedAt).toLocaleString());status.textContent+=' (connexion indisponible : copie locale affichée)';}
+  else{status.textContent='Impossible de récupérer les rencontres. Vérifie ta connexion puis réessaie.';$('matchesList').textContent='Aucune copie locale disponible pour ce sport.';}
+ }
+}
+$('loadMatches').addEventListener('click',loadMatches);
+
 if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}))}
 </script></body></html>
