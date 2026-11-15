@@ -1,0 +1,115 @@
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#071426">
+  <title>AK INTELLIGENCE</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #071426;
+      color: white;
+    }
+    header {
+      padding: 22px;
+      background: #10233e;
+      border-bottom: 1px solid #24476c;
+    }
+    header h1 { color: #35a8ff; margin: 0; }
+    header p { color: #b8c9dc; }
+    main { max-width: 850px; margin: auto; padding: 22px; }
+    .card {
+      background: #10233e;
+      border: 1px solid #24476c;
+      padding: 18px;
+      border-radius: 14px;
+      margin: 14px 0;
+    }
+    .agents {
+      display: grid;
+      grid-template-columns: repeat(auto-fit,minmax(135px,1fr));
+      gap: 12px;
+    }
+    button {
+      background: #087fe5;
+      border: 0;
+      color: white;
+      padding: 13px;
+      border-radius: 9px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    input {
+      width: 100%;
+      padding: 14px;
+      border-radius: 9px;
+      border: 1px solid #315577;
+      background: #071426;
+      color: white;
+      margin: 10px 0;
+    }
+    #answer { white-space: pre-wrap; line-height: 1.6; }
+    footer { text-align: center; color: #8ba3bd; padding: 25px; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>AK INTELLIGENCE</h1>
+    <p>Votre équipe d'intelligence artificielle</p>
+  </header>
+
+  <main>
+    <section class="card">
+      <h2>Bienvenue 👋</h2>
+      <p>Découvrez votre future équipe d'agents IA.</p>
+    </section>
+
+    <section class="card">
+      <h2>Nos agents intelligents</h2>
+      <div class="agents">
+        <button onclick="choose('Assistant')">🤖 Assistant</button>
+        <button onclick="choose('Writer')">✍️ Writer</button>
+        <button onclick="choose('Developer')">💻 Developer</button>
+        <button onclick="choose('Analyst')">📊 Analyst</button>
+        <button onclick="choose('Business')">💼 Business</button>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2 id="agent">AK Assistant</h2>
+      <input id="question" placeholder="Écrivez votre demande...">
+      <button onclick="ask()">Envoyer</button>
+      <p id="answer">Votre espace de discussion est prêt.</p>
+    </section>
+  </main>
+
+  <footer>© 2026 AK INTELLIGENCE</footer>
+
+  <script>
+    let selected = "Assistant";
+
+    function choose(name) {
+      selected = name;
+      document.getElementById("agent").textContent = "AK " + name;
+      document.getElementById("answer").textContent =
+        "Agent " + name + " sélectionné. Écrivez votre demande.";
+    }
+
+    function ask() {
+      const question = document.getElementById("question").value.trim();
+      if (!question) {
+        document.getElementById("answer").textContent =
+          "Veuillez écrire une demande.";
+        return;
+      }
+      document.getElementById("answer").textContent =
+        "Votre demande à AK " + selected + " :\n" + question +
+        "\n\nLe moteur IA sera connecté dans une prochaine étape.";
+    }
+  </script>
+</body>
+</html>
