@@ -76,9 +76,9 @@ function showMatches(matches,sourceLabel){
   const card=document.createElement('div');card.style.cssText='padding:12px;margin:10px 0;border:1px solid var(--line);border-radius:10px;background:#07182b';
   const home=m.homeTeam?.name||m.home_team?.name||m.home_team||m.strHomeTeam||m.home||m.player1?.name||m.player1||'Participant A';
   const away=m.awayTeam?.name||m.away_team?.name||m.away_team||m.strAwayTeam||m.away||m.player2?.name||m.player2||'Participant B';
-  const score=m.score?.fullTime||m.score||m.result||m.strResult||'';
+  const hs=m.home_score??m.homeScore,as=m.away_score??m.awayScore;const score=(hs!==null&&hs!==undefined&&as!==null&&as!==undefined)?(hs+' - '+as):(m.score?.fullTime||m.score||m.result||m.strResult||'');
   const status=m.status||m.state||m.strStatus||'';
-  const date=m.date||m.utcDate||m.startTime||m.strTimestamp||'';
+  const date=m.time||m.date||m.utcDate||m.startTime||m.strTimestamp||'';
   const title=document.createElement('strong');title.textContent=safeText(home)+' — '+safeText(away);card.appendChild(title);
   const detail=document.createElement('div');detail.style.marginTop='5px';detail.textContent=[safeText(score),safeText(status),safeText(date)].filter(Boolean).join(' · ');card.appendChild(detail);
   list.appendChild(card);
