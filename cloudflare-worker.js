@@ -1,72 +1,135 @@
 const ALLOWED_ORIGIN = "https://abdoulayeky080-del.github.io";
-const JSON_HEADERS = { "content-type": "application/json; charset=utf-8" };
-function response(data, status, origin) {
+const API_BASE = "https://api.football-data.org/v4";
+
+function json(data, status, origin) {
   return new Response(JSON.stringify(data), {
     status,
     headers: {
-      ...JSON_HEADERS,
-      "Access-Control-Allow-Origin": origin,
-      "Access-Control-Allow-Methods": "GET, OPTIONS",
-      "Access-Control-Allow-Headers": "Content-Type",
-      "Cache-Control": "no-store",
-      "Vary": "Origin"
+      "content-type": "application/json; charset=utf-8",
+      "access-control-allow-origin": origin,
+      "access-control-allow-methods": "GET, OPTIONS",
+      "access-control-allow-headers": "Content-Type",
+      "cache-control": "no-store",
+      "vary": "Origin"
     }
   });
 }
-export default {
-  async fetch(request, env, ctx) {
-    const url = new URL(request.url);
-    const origin = request.headers.get("Origin") || "";
-    const corsOrigin = origin === ALLOWED_ORIGIN ? ALLOWED_ORIGIN : "null";
-    if (request.method === "OPTIONS") {
-      return new Response(null, { status: 204, headers: {
-        "Access-Control-Allow-Origin": corsOrigin,
-        "Access-Control-Allow-Methods": "GET, OPTIONS",
-        "Access-Control-Allow-Headers": "Content-Type",
-        "Access-Control-Max-Age": "86400",
-        "Vary": "Origin"
-      }});
-    }
-    if (request.method !== "GET") return response({ error: "Method not allowed" }, 405, corsOrigin);
-    if (origin && origin !== ALLOWED_ORIGIN) return response({ error: "Origin not allowed" }, 403, corsOrigin);
-    if (!env.FOOTBALL_DATA_TOKEN) return response({ error: "Secret FOOTBALL_DATA_TOKEN manquant dans le Worker." }, 500, corsOrigin);
 
-    let apiPath = "";
-    if (url.pathname === "/football-data/competitions") {
-      apiPath = "/v4/competitions";
-    } else {
-      const match = url.pathname.match(/^\/football-data\/competitions\/([A-Z0-9]{2,5})\/matches$/);
-      if (!match) return response({ error: "Route inconnue." }, 404, corsOrigin);
-      apiPath = "/v4/competitions/" + match[1] + "/matches";
-    }
-    const params = new URLSearchParams();
-    if (apiPath.endsWith("/matches")) {
-      const from = url.searchParams.get("dateFrom");
-      const to = url.searchParams.get("dateTo");
-      const validDate = v => /^\d{4}-\d{2}-\d{2}$/.test(v || "");
-      if (!validDate(from) || !validDate(to)) return response({ error: "dateFrom et dateTo au format AAAA-MM-JJ sont requis." }, 400, corsOrigin);
-      if (to < from) return response({ error: "La date de fin doit être après la date de début." }, 400, corsOrigin);
-      const span = (Date.parse(to + "T00:00:00Z") - Date.parse(from + "T00:00:00Z")) / 86400000;
-      if (span > 14) return response({ error: "Période limitée à 14 jours." }, 400, corsOrigin);
-      params.set("dateFrom", from); params.set("dateTo", to);
-    }
-    const target = "https://api.football-data.org" + apiPath + (params.size ? "?" + params.toString() : "");
-    try {
-      const upstream = await fetch(target, {
-        headers: { "X-Auth-Token": env.FOOTBALL_DATA_TOKEN, "Accept": "application/json" },
-        cf: { cacheTtl: apiPath.endsWith("/matches") ? 120 : 21600, cacheEverything: true }
+function isRealDate(value) {
+  if (!/^\\d{4}-\\d{2}-\\d{2}$/.test(value || "")) return false;
+  const date = new Date(value + "T00:00:00Z");
+  return !Number.isNaN(date.getTime()) &&
+    date.toISOString().slice(0, 10) === value;
+}
+
+export default {
+  async fetch(request, env) {
+    const requestUrl = new URL(request.url);
+    const requestOrigin = request.headers.get("Origin") || "";
+    const allowedOrigin =
+      requestOrigin === ALLOWED_ORIGIN ? ALLOWED_ORIGIN : "null";
+
+    if (request.method === "OPTIONS") {
+      return new Response(null, {
+        status: 204,
+        headers: {
+          "access-control-allow-origin": allowedOrigin,
+          "access-control-allow-methods": "GET, OPTIONS",
+          "access-control-allow-headers": "Content-Type",
+          "access-control-max-age": "86400",
+          "vary": "Origin"
+        }
       });
+    }
+
+    if (request.method !== "GET") {
+      return json({ error: "Méthode non autorisée." }, 405, allowedOrigin);
+    }
+
+    if (requestOrigin && requestOrigin !== ALLOWED_ORIGIN) {
+      return json({ error: "Origine non autorisée." }, 403, allowedOrigin);
+    }
+
+    if (!env.FOOTBALL_DATA_TOKEN) {
+      return json({
+        error: "Le secret FOOTBALL_DATA_TOKEN est absent du Worker."
+      }, 500, allowedOrigin);
+    }
+
+    let endpoint = "";
+    const params = new URLSearchParams();
+
+    if (requestUrl.pathname === "/football-data/competitions") {
+      endpoint = "/competitions";
+    } else {
+      const match = requestUrl.pathname.match(
+        /^\\/football-data\\/competitions\\/([A-Z0-9]{2,5})\\/matches$/
+      );
+
+      if (!match) {
+        return json({ error: "Route inconnue." }, 404, allowedOrigin);
+      }
+
+      endpoint = "/competitions/" + match[1] + "/matches";
+
+      const dateFrom = requestUrl.searchParams.get("dateFrom");
+      const dateTo = requestUrl.searchParams.get("dateTo");
+
+      if (!isRealDate(dateFrom) || !isRealDate(dateTo)) {
+        return json({
+          error: "Dates requises au format AAAA-MM-JJ."
+        }, 400, allowedOrigin);
+      }
+
+      if (dateTo < dateFrom) {
+        return json({
+          error: "La date de fin doit être postérieure à la date de début."
+        }, 400, allowedOrigin);
+      }
+
+      const days =
+        (Date.parse(dateTo + "T00:00:00Z") -
+         Date.parse(dateFrom + "T00:00:00Z")) / 86400000;
+
+      if (days > 14) {
+        return json({
+          error: "La période demandée ne peut pas dépasser 14 jours."
+        }, 400, allowedOrigin);
+      }
+
+      params.set("dateFrom", dateFrom);
+      params.set("dateTo", dateTo);
+    }
+
+    const query = params.toString();
+    const apiUrl = API_BASE + endpoint + (query ? "?" + query : "");
+
+    try {
+      const upstream = await fetch(apiUrl, {
+        method: "GET",
+        headers: {
+          "X-Auth-Token": env.FOOTBALL_DATA_TOKEN,
+          "Accept": "application/json"
+        }
+      });
+
       const body = await upstream.text();
-      return new Response(body, { status: upstream.status, headers: {
-        ...JSON_HEADERS,
-        "Access-Control-Allow-Origin": corsOrigin,
-        "Access-Control-Allow-Methods": "GET, OPTIONS",
-        "Access-Control-Allow-Headers": "Content-Type",
-        "Cache-Control": "no-store",
-        "Vary": "Origin"
-      }});
-    } catch (e) {
-      return response({ error: "Service Football-Data.org temporairement indisponible." }, 502, corsOrigin);
+
+      return new Response(body, {
+        status: upstream.status,
+        headers: {
+          "content-type": "application/json; charset=utf-8",
+          "access-control-allow-origin": allowedOrigin,
+          "access-control-allow-methods": "GET, OPTIONS",
+          "access-control-allow-headers": "Content-Type",
+          "cache-control": "no-store",
+          "vary": "Origin"
+        }
+      });
+    } catch (error) {
+      return json({
+        error: "Impossible de joindre Football-Data.org pour le moment."
+      }, 502, allowedOrigin);
     }
   }
 };
