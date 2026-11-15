@@ -133,7 +133,8 @@ function calcAdvanced(){
  addText(out,'p','Limites : calculs fondés sur les moyennes que tu saisis, avec hypothèse de Poisson et indépendance simplificatrice. Les touches, fautes, cartons et scores exacts ne sont pas des prédictions validées. Les cartons rouges, blessures et compositions ne sont pas prédits.');
 }
 $('calcAdvanced').addEventListener('click',calcAdvanced);
-\n// Données de rencontres SportScore : elles enrichissent l'écran mais ne génèrent pas encore de pronostic automatique.
+
+// Données de rencontres SportScore : elles enrichissent l'écran mais ne génèrent pas encore de pronostic automatique.
 const liveKey='ak_bet_live_cache_v1';
 function safeText(value){return value===null||value===undefined?'':String(value)}
 function showMatches(matches,sourceLabel){
