@@ -5,200 +5,97 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#071426">
+  <meta name="google-site-verification" content="JiMkB_etBCU8v-a_vslT425Xk2TxGbIdC_MoBEvzf4s" />
   <title>AK INTELLIGENCE</title>
   <style>
     * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background: #071426;
-      color: white;
-    }
-    header {
-      padding: 22px;
-      background: #10233e;
-      border-bottom: 1px solid #24476c;
-    }
+    body { margin: 0; font-family: Arial, sans-serif; background: #071426; color: white; }
+    header { padding: 22px; background: #10233e; border-bottom: 1px solid #24476c; }
     header h1 { color: #35a8ff; margin: 0; }
     header p { color: #b8c9dc; }
     main { max-width: 850px; margin: auto; padding: 22px; }
-    .card {
-      background: #10233e;
-      border: 1px solid #24476c;
-      padding: 18px;
-      border-radius: 14px;
-      margin: 14px 0;
-    }
-    .agents {
-      display: grid;
-      grid-template-columns: repeat(auto-fit,minmax(135px,1fr));
-      gap: 12px;
-    }
-    button {
-      background: #087fe5;
-      border: 0;
-      color: white;
-      padding: 13px;
-      border-radius: 9px;
-      cursor: pointer;
-      font-weight: bold;
-    }
-    input {
-      width: 100%;
-      padding: 14px;
-      border-radius: 9px;
-      border: 1px solid #315577;
-      background: #071426;
-      color: white;
-      margin: 10px 0;
-    }
+    .card { background: #10233e; border: 1px solid #24476c; padding: 18px; border-radius: 14px; margin: 14px 0; }
+    .agents { display: grid; grid-template-columns: repeat(auto-fit,minmax(135px,1fr)); gap: 12px; }
+    button { background: #087fe5; border: 0; color: white; padding: 13px; border-radius: 9px; cursor: pointer; font-weight: bold; }
+    input { width: 100%; padding: 14px; border-radius: 9px; border: 1px solid #315577; background: #071426; color: white; margin: 10px 0; }
     #answer { white-space: pre-wrap; line-height: 1.6; }
     footer { text-align: center; color: #8ba3bd; padding: 25px; }
   </style>
 </head>
 <body>
-  <header>
-    <h1>AK INTELLIGENCE</h1>
-    <p>Votre équipe d'intelligence artificielle</p>
-  </header>
-
+  <header><h1>AK INTELLIGENCE</h1><p>Votre équipe d'intelligence artificielle</p></header>
   <main>
-    <section class="card">
-      <h2>Bienvenue 👋</h2>
-      <p>Découvrez votre future équipe d'agents IA.</p>
-    </section>
-
-    <section class="card">
-      <h2>Nos agents intelligents</h2>
-      <div class="agents">
-        <button onclick="choose('Assistant')">🤖 Assistant</button>
-        <button onclick="choose('Writer')">✍️ Writer</button>
-        <button onclick="choose('Developer')">💻 Developer</button>
-        <button onclick="choose('Analyst')">📊 Analyst</button>
-        <button onclick="choose('Business')">💼 Business</button>
-      </div>
-    </section>
-
-    <section class="card">
-      <h2 id="agent">AK Assistant</h2>
-      <input id="question" placeholder="Écrivez votre demande...">
-      <button onclick="ask()">Envoyer</button>
-      <p id="answer">Votre espace de discussion est prêt.</p>
+    <section class="card"><h2>Bienvenue 👋</h2><p>Découvrez votre future équipe d'agents IA.</p></section>
+    <section class="card"><h2>Nos agents intelligents</h2><div class="agents">
+      <button onclick="choose('Assistant')">🤖 Assistant</button>
+      <button onclick="choose('Writer')">✍️ Writer</button>
+      <button onclick="choose('Developer')">💻 Developer</button>
+      <button onclick="choose('Analyst')">📊 Analyst</button>
+      <button onclick="choose('Business')">💼 Business</button>
+    </div></section>
+    <section class="card"><h2 id="agent">AK Assistant</h2><input id="question" placeholder="Écrivez votre demande..."><button onclick="ask()">Envoyer</button><p id="answer">Votre espace de discussion est prêt.</p></section>
+    <section id="ak-auth" class="card">
+      <h2>AK INTELLIGENCE — Compte</h2>
+      <input id="ak-email" type="email" placeholder="Ton adresse e-mail">
+      <input id="ak-password" type="password" placeholder="Ton mot de passe">
+      <button id="ak-signup">Créer un compte</button>
+      <button id="ak-login">Se connecter</button>
+      <button id="ak-logout" style="display:none">Se déconnecter</button>
+      <p id="ak-status">Connexion à Supabase...</p>
     </section>
   </main>
-
   <footer>© 2026 AK INTELLIGENCE</footer>
-
   <script>
     let selected = "Assistant";
-
     function choose(name) {
       selected = name;
       document.getElementById("agent").textContent = "AK " + name;
-      document.getElementById("answer").textContent =
-        "Agent " + name + " sélectionné. Écrivez votre demande.";
+      document.getElementById("answer").textContent = "Agent " + name + " sélectionné. Écrivez votre demande.";
     }
-
     function ask() {
       const question = document.getElementById("question").value.trim();
-      if (!question) {
-        document.getElementById("answer").textContent =
-          "Veuillez écrire une demande.";
-        return;
-      }
-      document.getElementById("answer").textContent =
-        "Votre demande à AK " + selected + " :\n" + question +
-        "\n\nLe moteur IA sera connecté dans une prochaine étape.";
+      document.getElementById("answer").textContent = question
+        ? "Votre demande à AK " + selected + " :\n" + question + "\n\nLe moteur IA sera connecté dans une prochaine étape."
+        : "Veuillez écrire une demande.";
     }
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    const AK_URL = "https://akyaexrrjsandatasknq.supabase.co";
+    const AK_KEY = "sb_publishable_dSSG48fR3QggicsKtoZ_Aw_ZXeYNIR6";
+    const akSupabase = window.supabase.createClient(AK_URL, AK_KEY);
+    const statusBox = document.getElementById("ak-status");
+    const logoutButton = document.getElementById("ak-logout");
+    function showStatus(message) { statusBox.textContent = message; }
+    document.getElementById("ak-signup").addEventListener("click", async () => {
+      const email = document.getElementById("ak-email").value.trim();
+      const password = document.getElementById("ak-password").value;
+      if (!email || password.length < 6) return showStatus("Entre un e-mail valide et un mot de passe d'au moins 6 caractères.");
+      const { data, error } = await akSupabase.auth.signUp({ email, password, options: { emailRedirectTo: window.location.origin + window.location.pathname } });
+      if (error) return showStatus("Erreur : " + error.message);
+      showStatus(data.session ? "Compte créé et connecté !" : "Compte créé. Vérifie ta boîte e-mail pour confirmer ton adresse.");
+    });
+    document.getElementById("ak-login").addEventListener("click", async () => {
+      const email = document.getElementById("ak-email").value.trim();
+      const password = document.getElementById("ak-password").value;
+      const { error } = await akSupabase.auth.signInWithPassword({ email, password });
+      if (error) return showStatus("Erreur : " + error.message);
+      showStatus("Connexion réussie !");
+    });
+    logoutButton.addEventListener("click", async () => {
+      const { error } = await akSupabase.auth.signOut({ scope: "local" });
+      showStatus(error ? error.message : "Déconnexion réussie.");
+    });
+    akSupabase.auth.onAuthStateChange((event, session) => {
+      logoutButton.style.display = session ? "inline-block" : "none";
+      if (session) showStatus("Connecté : " + session.user.email);
+      else if (event === "SIGNED_OUT") showStatus("Tu es déconnecté.");
+    });
+    (async () => {
+      const { data } = await akSupabase.auth.getSession();
+      if (data.session) { logoutButton.style.display = "inline-block"; showStatus("Connecté : " + data.session.user.email); }
+      else showStatus("Tu peux créer un compte ou te connecter.");
+    })();
   </script>
 </body>
 </html>
-
-<!-- AK INTELLIGENCE - CONNEXION SUPABASE -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-<div id="ak-auth" style="max-width:420px;margin:30px auto;padding:20px;background:#171717;color:white;border-radius:14px;font-family:Arial;">
-  <h2>AK INTELLIGENCE — Compte</h2>
-  <input id="ak-email" type="email" placeholder="Ton adresse e-mail" style="width:100%;padding:12px;margin:8px 0;box-sizing:border-box;">
-  <input id="ak-password" type="password" placeholder="Ton mot de passe" style="width:100%;padding:12px;margin:8px 0;box-sizing:border-box;">
-  <button id="ak-signup" style="padding:12px;margin:5px;">Créer un compte</button>
-  <button id="ak-login" style="padding:12px;margin:5px;">Se connecter</button>
-  <button id="ak-logout" style="padding:12px;margin:5px;display:none;">Se déconnecter</button>
-  <p id="ak-status">Connexion à Supabase...</p>
-</div>
-
-<script>
-const AK_URL = "https://akyaexrrjsandatasknq.supabase.co";
-const AK_KEY = "sb_publishable_dSSG48fR3QggicsKtoZ_Aw_ZXeYNIR6";
-
-const akSupabase = window.supabase.createClient(AK_URL, AK_KEY);
-
-const statusBox = document.getElementById("ak-status");
-const logoutButton = document.getElementById("ak-logout");
-
-function showStatus(message) {
-  statusBox.textContent = message;
-}
-
-document.getElementById("ak-signup").addEventListener("click", async () => {
-  const email = document.getElementById("ak-email").value.trim();
-  const password = document.getElementById("ak-password").value;
-
-  if (!email || password.length < 6) {
-    showStatus("Entre un e-mail valide et un mot de passe d'au moins 6 caractères.");
-    return;
-  }
-
-  const { data, error } = await akSupabase.auth.signUp({
-    email,
-    password,
-    options: {
-      emailRedirectTo: window.location.origin + window.location.pathname
-    }
-  });
-
-  if (error) return showStatus("Erreur : " + error.message);
-
-  showStatus(data.session
-    ? "Compte créé et connecté !"
-    : "Compte créé. Vérifie ta boîte e-mail pour confirmer ton adresse.");
-});
-
-document.getElementById("ak-login").addEventListener("click", async () => {
-  const email = document.getElementById("ak-email").value.trim();
-  const password = document.getElementById("ak-password").value;
-
-  const { error } = await akSupabase.auth.signInWithPassword({
-    email,
-    password
-  });
-
-  if (error) return showStatus("Erreur : " + error.message);
-
-  showStatus("Connexion réussie !");
-});
-
-logoutButton.addEventListener("click", async () => {
-  const { error } = await akSupabase.auth.signOut({ scope: "local" });
-  showStatus(error ? error.message : "Déconnexion réussie.");
-});
-
-akSupabase.auth.onAuthStateChange((event, session) => {
-  logoutButton.style.display = session ? "inline-block" : "none";
-  if (session) {
-    showStatus("Connecté : " + session.user.email);
-  } else if (event === "SIGNED_OUT") {
-    showStatus("Tu es déconnecté.");
-  }
-});
-
-(async () => {
-  const { data } = await akSupabase.auth.getSession();
-  if (data.session) {
-    logoutButton.style.display = "inline-block";
-    showStatus("Connecté : " + data.session.user.email);
-  } else {
-    showStatus("Tu peux créer un compte ou te connecter.");
-  }
-})();
-</script>
